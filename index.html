@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>A2Z IT HUB - Data Utility Pro</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;700&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.2.67/pdf.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <main class="container">
+    <header class="header">
+      <div class="header-left">
+        <div class="brand-row">
+          <img class="brand-logo" src="a2z-logo.png" alt="A2Z IT HUB Logo" onerror="this.style.display='none'; this.nextElementSibling.style.display='grid';" />
+          <div class="brand-mark">A2Z</div>
+          <h1 class="title">A2Z IT HUB - Data Utility Pro</h1>
+        </div>
+        <p class="subtitle">
+          Numbers clean करा, duplicates remove करा, 91 add/remove करा, आणि final result direct CSV, Excel, PDF, TXT मध्ये export करा.
+        </p>
+      </div>
+    </header>
+
+    <section class="content">
+      <label for="fileInput">Upload CSV / Excel / PDF</label>
+      <div class="upload-panel">
+        <input class="file-input" type="file" id="fileInput" accept=".csv,.xlsx,.xls,.pdf" />
+        <p class="file-note" id="fileInfo">File preview: -</p>
+        <div class="table-wrap" id="tableWrap">
+          <table class="data-table" id="dataTable"></table>
+        </div>
+        <pre class="pdf-output" id="pdfPreview">-</pre>
+      </div>
+
+      <label for="numbersInput">Numbers Input</label>
+      <textarea id="numbersInput" placeholder="Example: 10, 20, 20, 35 35 40\n40, 55"></textarea>
+
+      <div class="buttons">
+        <button type="button" class="primary" id="removeBtn">Remove Duplicates</button>
+        <button type="button" class="primary" id="add91Btn">Make All Start With 91</button>
+        <button type="button" class="primary" id="cleanBtn">Remove 91 + Text</button>
+        <button type="button" class="secondary" id="clearBtn">Clear</button>
+      </div>
+
+      <p class="message" id="message"></p>
+      <p class="stats" id="stats">Total: 0 | Unique: 0 | Removed: 0</p>
+
+      <section class="export-panel">
+        <div class="export-top">
+          <label for="exportSource">Export Source</label>
+          <select id="exportSource" class="export-select">
+            <option value="unique">Unique Numbers</option>
+            <option value="duplicates">Removed Duplicates</option>
+            <option value="prefixed">Unique Numbers Starting With 91</option>
+            <option value="cleaned">Cleaned Numbers (No 91, No Text)</option>
+          </select>
+        </div>
+        <div class="export-buttons">
+          <button type="button" class="ghost" id="exportCsvBtn">Export CSV</button>
+          <button type="button" class="ghost" id="exportExcelBtn">Export Excel</button>
+          <button type="button" class="ghost" id="exportPdfBtn">Export PDF</button>
+          <button type="button" class="ghost" id="exportTxtBtn">Export TXT</button>
+        </div>
+        <p class="export-note" id="exportNote"></p>
+      </section>
+
+      <div class="result-grid">
+        <article class="card">
+          <div class="card-head">
+            <h3>Unique Numbers</h3>
+            <button type="button" class="copy-btn" data-copy-target="uniqueOutput">Copy</button>
+          </div>
+          <p class="output" id="uniqueOutput">-</p>
+        </article>
+
+        <article class="card">
+          <div class="card-head">
+            <h3>Removed Duplicates</h3>
+            <button type="button" class="copy-btn" data-copy-target="duplicateOutput">Copy</button>
+          </div>
+          <p class="output" id="duplicateOutput">-</p>
+        </article>
+
+        <article class="card">
+          <div class="card-head">
+            <h3>Unique Numbers Starting With 91</h3>
+            <button type="button" class="copy-btn" data-copy-target="prefixedOutput">Copy</button>
+          </div>
+          <p class="output" id="prefixedOutput">-</p>
+        </article>
+
+        <article class="card">
+          <div class="card-head">
+            <h3>Cleaned Numbers (No 91, No Text)</h3>
+            <button type="button" class="copy-btn" data-copy-target="cleanedOutput">Copy</button>
+          </div>
+          <p class="output" id="cleanedOutput">-</p>
+        </article>
+      </div>
+    </section>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>
