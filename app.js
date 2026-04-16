@@ -110,6 +110,40 @@ function parseCsvText(csvText) {
   return lines.map(parseCsvLine);
 }
 
+function extractNumbersFromText(raw) {
+  if (!raw) {
+    return [];
+  }
+
+  const matches = String(raw).match(/[-+]?\d+(?:\.\d+)?/g);
+  return matches ? matches.map((item) => item.trim()).filter(Boolean) : [];
+}
+
+function extractNumbersFromRows(rows) {
+  const collected = [];
+
+  for (const row of rows) {
+    for (const cell of row) {
+      const found = extractNumbersFromText(cell);
+      if (found.length) {
+        collected.push(...found);
+      }
+    }
+  }
+
+  return collected;
+}
+
+function populateInputFromUploadedNumbers(numbers, sourceLabel) {
+  if (!numbers.length) {
+    message.textContent = `${sourceLabel} uploaded, but no numbers found for processing.`;
+    return;
+  }
+
+  numbersInput.value = numbers.join("\n");
+  message.textContent = `${sourceLabel} uploaded. ${numbers.length} numbers loaded. Now use any action button.`;
+}
+
 function renderTable(rows) {
   currentPreviewRows = rows;
 
@@ -171,8 +205,10 @@ function renderPdfPreview(text) {
 async function previewCsv(file) {
   const text = await file.text();
   const rows = parseCsvText(text);
+  const extractedNumbers = extractNumbersFromRows(rows);
   isShowingAllRows = false;
   renderTable(rows);
+  populateInputFromUploadedNumbers(extractedNumbers, "CSV");
 }
 
 async function previewExcel(file) {
@@ -185,9 +221,11 @@ async function previewExcel(file) {
   const firstSheetName = workbook.SheetNames[0];
   const worksheet = workbook.Sheets[firstSheetName];
   const rows = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: "" });
+  const extractedNumbers = extractNumbersFromRows(rows);
   isShowingAllRows = false;
   renderTable(rows);
   fileInfo.textContent = `File preview: Sheet ${firstSheetName}, ${Math.max(rows.length - 1, 0)} rows.`;
+  populateInputFromUploadedNumbers(extractedNumbers, "Excel");
 }
 
 async function previewPdf(file) {
@@ -208,8 +246,10 @@ async function previewPdf(file) {
 
   isPdfExpanded = false;
   currentPdfText = pages.join("\n\n");
+  const extractedNumbers = extractNumbersFromText(currentPdfText);
   renderPdfPreview(currentPdfText);
   fileInfo.textContent = `File preview: PDF ${pdf.numPages} pages.`;
+  populateInputFromUploadedNumbers(extractedNumbers, "PDF");
 }
 
 function removeDuplicates(numbers) {
