@@ -7,6 +7,10 @@ const fileInfo = document.getElementById("fileInfo");
 const dataTable = document.getElementById("dataTable");
 const tableWrap = document.getElementById("tableWrap");
 const pdfPreview = document.getElementById("pdfPreview");
+const previewToolbar = document.getElementById("previewToolbar");
+const previewMeta = document.getElementById("previewMeta");
+const togglePreviewBtn = document.getElementById("togglePreviewBtn");
+const togglePdfBtn = document.getElementById("togglePdfBtn");
 const numbersInput = document.getElementById("numbersInput");
 const removeBtn = document.getElementById("removeBtn");
 const add91Btn = document.getElementById("add91Btn");
@@ -25,6 +29,13 @@ const exportExcelBtn = document.getElementById("exportExcelBtn");
 const exportPdfBtn = document.getElementById("exportPdfBtn");
 const exportTxtBtn = document.getElementById("exportTxtBtn");
 const exportNote = document.getElementById("exportNote");
+
+const PREVIEW_ROW_LIMIT = 25;
+const PDF_PREVIEW_CHAR_LIMIT = 1800;
+let currentPreviewRows = [];
+let isShowingAllRows = false;
+let currentPdfText = "";
+let isPdfExpanded = false;
 
 function parseNumbers(raw) {
   const tokens = raw
@@ -100,27 +111,67 @@ function parseCsvText(csvText) {
 }
 
 function renderTable(rows) {
+  currentPreviewRows = rows;
+
   if (!rows.length) {
     dataTable.innerHTML = "";
     fileInfo.textContent = "File preview: No rows found.";
+    previewToolbar.hidden = true;
+    togglePreviewBtn.style.display = "none";
     return;
   }
 
+  const dataRows = rows.slice(1);
+  const visibleDataRows = isShowingAllRows ? dataRows : dataRows.slice(0, PREVIEW_ROW_LIMIT);
   const headerCells = rows[0].map((cell, index) => `<th>${escapeHtml(cell || `Column ${index + 1}`)}</th>`).join("");
-  const bodyRows = rows.slice(1).map((row) => {
+  const bodyRows = visibleDataRows.map((row) => {
     const cells = row.map((cell) => `<td>${escapeHtml(cell)}</td>`).join("");
     return `<tr>${cells}</tr>`;
   }).join("");
 
   dataTable.innerHTML = `<thead><tr>${headerCells}</tr></thead><tbody>${bodyRows}</tbody>`;
-  fileInfo.textContent = `File preview: ${rows.length - 1} rows shown.`;
+  fileInfo.textContent = `File preview: ${dataRows.length} rows detected.`;
+  previewToolbar.hidden = false;
+  previewMeta.textContent = isShowingAllRows
+    ? `Showing all ${dataRows.length} rows.`
+    : `Showing first ${Math.min(PREVIEW_ROW_LIMIT, dataRows.length)} of ${dataRows.length} rows.`;
+
+  if (dataRows.length > PREVIEW_ROW_LIMIT) {
+    togglePreviewBtn.style.display = "inline-flex";
+    togglePreviewBtn.textContent = isShowingAllRows ? "Show Less Rows" : "Show All Rows";
+  } else {
+    togglePreviewBtn.style.display = "none";
+  }
+
   tableWrap.style.display = "block";
   pdfPreview.style.display = "none";
+  togglePdfBtn.style.display = "none";
+}
+
+function renderPdfPreview(text) {
+  const safeText = (text || "").trim();
+  const hasMore = safeText.length > PDF_PREVIEW_CHAR_LIMIT;
+  const visibleText = (!hasMore || isPdfExpanded)
+    ? safeText
+    : `${safeText.slice(0, PDF_PREVIEW_CHAR_LIMIT)}\n\n... (truncated)`;
+
+  tableWrap.style.display = "none";
+  previewToolbar.hidden = true;
+  pdfPreview.style.display = "block";
+  pdfPreview.textContent = visibleText || "No extractable text found.";
+
+  if (hasMore) {
+    togglePdfBtn.style.display = "inline-flex";
+    togglePdfBtn.textContent = isPdfExpanded ? "Show Short Preview" : "Show Full PDF Text";
+  } else {
+    togglePdfBtn.style.display = "none";
+  }
 }
 
 async function previewCsv(file) {
   const text = await file.text();
   const rows = parseCsvText(text);
+  isShowingAllRows = false;
   renderTable(rows);
 }
 
@@ -134,6 +185,7 @@ async function previewExcel(file) {
   const firstSheetName = workbook.SheetNames[0];
   const worksheet = workbook.Sheets[firstSheetName];
   const rows = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: "" });
+  isShowingAllRows = false;
   renderTable(rows);
   fileInfo.textContent = `File preview: Sheet ${firstSheetName}, ${Math.max(rows.length - 1, 0)} rows.`;
 }
@@ -154,9 +206,9 @@ async function previewPdf(file) {
     pages.push(`Page ${pageNumber}: ${text}`);
   }
 
-  tableWrap.style.display = "none";
-  pdfPreview.style.display = "block";
-  pdfPreview.textContent = pages.join("\n\n") || "No extractable text found.";
+  isPdfExpanded = false;
+  currentPdfText = pages.join("\n\n");
+  renderPdfPreview(currentPdfText);
   fileInfo.textContent = `File preview: PDF ${pdf.numPages} pages.`;
 }
 
@@ -354,6 +406,14 @@ function exportPdf() {
 fileInput.addEventListener("change", async () => {
   message.textContent = "";
   exportNote.textContent = "";
+  dataTable.innerHTML = "";
+  previewToolbar.hidden = true;
+  togglePreviewBtn.style.display = "none";
+  togglePdfBtn.style.display = "none";
+  currentPreviewRows = [];
+  currentPdfText = "";
+  isShowingAllRows = false;
+  isPdfExpanded = false;
 
   const file = fileInput.files && fileInput.files[0];
   if (!file) {
@@ -374,10 +434,31 @@ fileInput.addEventListener("change", async () => {
     }
   } catch (error) {
     tableWrap.style.display = "none";
+    previewToolbar.hidden = true;
+    togglePreviewBtn.style.display = "none";
+    togglePdfBtn.style.display = "none";
     pdfPreview.style.display = "block";
     pdfPreview.textContent = "Could not read this file.";
     fileInfo.textContent = "File preview: Error while reading file.";
   }
+});
+
+togglePreviewBtn.addEventListener("click", () => {
+  if (!currentPreviewRows.length) {
+    return;
+  }
+
+  isShowingAllRows = !isShowingAllRows;
+  renderTable(currentPreviewRows);
+});
+
+togglePdfBtn.addEventListener("click", () => {
+  if (!currentPdfText) {
+    return;
+  }
+
+  isPdfExpanded = !isPdfExpanded;
+  renderPdfPreview(currentPdfText);
 });
 
 removeBtn.addEventListener("click", () => {

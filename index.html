@@ -33,10 +33,15 @@
       <div class="upload-panel">
         <input class="file-input" type="file" id="fileInput" accept=".csv,.xlsx,.xls,.pdf" />
         <p class="file-note" id="fileInfo">File preview: -</p>
+        <div class="preview-toolbar" id="previewToolbar" hidden>
+          <p class="preview-meta" id="previewMeta"></p>
+          <button type="button" class="ghost small" id="togglePreviewBtn" style="display:none;">Show All Rows</button>
+        </div>
         <div class="table-wrap" id="tableWrap">
           <table class="data-table" id="dataTable"></table>
         </div>
         <pre class="pdf-output" id="pdfPreview">-</pre>
+        <button type="button" class="ghost small" id="togglePdfBtn" style="display:none; margin-top:10px;">Show Full PDF Text</button>
       </div>
 
       <label for="numbersInput">Numbers Input</label>
